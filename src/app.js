@@ -3,6 +3,8 @@ import express from 'express';
 import morgan from 'morgan';
 import { dbConnection } from '../config/db.js';
 import categoryRouter from './routes/category.routes.js';
+import { AppError } from './utils/appError.js';
+import { globalErrorHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
 
@@ -19,7 +21,26 @@ if (process.env.NODE_ENV === 'development') {
 /*                   ROUTES                   */
 app.use('/api/v1/categories', categoryRouter);
 
+// ignore all MWs → jump to globalErrorHandler MW
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
+});
+
+/*           Global ErrorHandler MW           */
+app.use(globalErrorHandler);
+
 const port = process.env.PORT || 5000;
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server running on port ${port} ✅`);
+});
+
+/*     Handle Promise Rejection (handle errors outside express)     */
+process.on('unhandledRejection', (err) => {
+  console.log('Unhandled Rejection! 💥 Shutting down...');
+  console.log(err.name, err.message);
+
+  // When server is closed, shutdown app
+  server.close(() => {
+    process.exit(1);
+  });
 });
