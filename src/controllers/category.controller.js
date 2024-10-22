@@ -1,6 +1,7 @@
 import slugify from 'slugify';
-import { Category } from '../models/category.models.js';
 import catchAsyncError from 'express-async-handler';
+import { Category } from '../models/category.models.js';
+import { AppError } from '../utils/appError.js';
 
 export const getAllCategories = catchAsyncError(async (req, res) => {
   const page = req.query.page * 1 || 1;
@@ -19,16 +20,13 @@ export const getAllCategories = catchAsyncError(async (req, res) => {
   });
 });
 
-export const getCategory = catchAsyncError(async (req, res) => {
+export const getCategory = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
 
   const category = await Category.findById(id);
 
   if (!category) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Category not found',
-    });
+    return next(new AppError(`Category with ID ${id} not found`, 404));
   }
 
   res.status(200).json({
@@ -55,7 +53,7 @@ export const createCategory = catchAsyncError(async (req, res) => {
   });
 });
 
-export const updateCategory = catchAsyncError(async (req, res) => {
+export const updateCategory = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -69,10 +67,7 @@ export const updateCategory = catchAsyncError(async (req, res) => {
   );
 
   if (!category) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Category not found',
-    });
+    return next(new AppError(`Category with ID ${id} not found`, 404));
   }
 
   res.status(200).json({
@@ -83,16 +78,13 @@ export const updateCategory = catchAsyncError(async (req, res) => {
   });
 });
 
-export const deleteCategory = catchAsyncError(async (req, res) => {
+export const deleteCategory = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
 
   const category = await Category.findByIdAndDelete(id);
 
   if (!category) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Category not found',
-    });
+    return next(new AppError(`Category with ID ${id} not found`, 404));
   }
 
   res.status(204).json({
