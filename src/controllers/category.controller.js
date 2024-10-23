@@ -1,6 +1,6 @@
 import slugify from 'slugify';
 import catchAsyncError from 'express-async-handler';
-import { Category } from '../models/category.models.js';
+import { Category } from '../models/category.model.js';
 import { AppError } from '../utils/appError.js';
 
 export const getAllCategories = catchAsyncError(async (req, res) => {
