@@ -14,7 +14,12 @@ import {
   deleteCategory,
 } from '../controllers/category.controller.js';
 
+import subCategoryRouter from './subcategory.routes.js';
+
 const router = express.Router();
+
+// Git /api/v1/categories/:categoryId/subcategories  →  nested route
+router.use('/:categoryId/subcategories', subCategoryRouter);
 
 router
   .route('/')
