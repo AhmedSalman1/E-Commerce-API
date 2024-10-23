@@ -1,5 +1,10 @@
 import express from 'express';
-import { param, validationResult } from 'express-validator';
+import {
+  getCategoryValidator,
+  createCategoryValidator,
+  updateCategoryValidator,
+  deleteCategoryValidator,
+} from '../utils/validators/categoryValidator.js';
 
 import {
   getAllCategories,
@@ -11,21 +16,14 @@ import {
 
 const router = express.Router();
 
-router.route('/').get(getAllCategories).post(createCategory);
+router
+  .route('/')
+  .get(getAllCategories)
+  .post(createCategoryValidator, createCategory);
 router
   .route('/:id')
-  .get(
-    param('id').isMongoId().withMessage('Invalid Category ID format!'),
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-      next();
-    },
-    getCategory
-  )
-  .patch(updateCategory)
-  .delete(deleteCategory);
+  .get(getCategoryValidator, getCategory)
+  .patch(updateCategoryValidator, updateCategory)
+  .delete(deleteCategoryValidator, deleteCategory);
 
 export default router;
