@@ -3,6 +3,12 @@ import catchAsyncError from 'express-async-handler';
 import { SubCategory } from '../models/subcategory.model.js';
 import { AppError } from '../utils/appError.js';
 
+export const setCategoryIdToBody = (req, res, next) => {
+  // Nested route
+  if (!req.body.category) req.body.category = req.params.categoryId;
+  next();
+};
+
 export const getAllSubCategories = catchAsyncError(async (req, res) => {
   const page = req.query.page * 1 || 1;
   const limit = req.query.limit * 1 || 3;

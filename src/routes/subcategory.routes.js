@@ -12,6 +12,7 @@ import {
   getAllSubCategories,
   getSubCategory,
   updateSubCategory,
+  setCategoryIdToBody,
 } from '../controllers/subcategory.controller.js';
 
 // access params from other(parent) routers
@@ -20,7 +21,7 @@ const router = express.Router({ mergeParams: true });
 router
   .route('/')
   .get(getAllSubCategories)
-  .post(createSubCategoryValidator, createSubCategory);
+  .post(setCategoryIdToBody, createSubCategoryValidator, createSubCategory);
 router
   .route('/:id')
   .get(getSubCategoryValidator, getSubCategory)
