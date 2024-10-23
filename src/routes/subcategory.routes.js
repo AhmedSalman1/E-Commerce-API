@@ -14,7 +14,8 @@ import {
   updateSubCategory,
 } from '../controllers/subcategory.controller.js';
 
-const router = express.Router();
+// access params from other(parent) routers
+const router = express.Router({ mergeParams: true });
 
 router
   .route('/')

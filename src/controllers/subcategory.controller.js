@@ -8,7 +8,10 @@ export const getAllSubCategories = catchAsyncError(async (req, res) => {
   const limit = req.query.limit * 1 || 3;
   const skip = (page - 1) * limit;
 
-  const subCategories = await SubCategory.find({}).skip(skip).limit(limit);
+  let filter = {};
+  if (req.params.categoryId) filter = { category: req.params.categoryId };
+
+  const subCategories = await SubCategory.find(filter).skip(skip).limit(limit);
 
   res.status(200).json({
     status: 'success',
