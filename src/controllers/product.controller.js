@@ -8,10 +8,10 @@ export const getAllProducts = catchAsyncError(async (req, res) => {
   const limit = req.query.limit * 1 || 9;
   const skip = (page - 1) * limit;
 
-  const products = await Product.find({}).skip(skip).limit(limit).populate({
-    path: 'category',
-    select: 'name -_id',
-  });
+  const products = await Product.find()
+    .skip(skip)
+    .limit(limit)
+    .populate('category subcategories', 'name -_id');
 
   res.status(200).json({
     status: 'success',
@@ -26,10 +26,10 @@ export const getAllProducts = catchAsyncError(async (req, res) => {
 export const getProduct = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
 
-  const product = await Product.findById(id).populate({
-    path: 'category',
-    select: 'name -_id',
-  });
+  const product = await Product.findById(id).populate(
+    'category subcategories',
+    'name -_id'
+  );
 
   if (!product) {
     return next(new AppError(`Product with ID ${id} not found`, 404));

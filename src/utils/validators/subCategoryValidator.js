@@ -14,16 +14,8 @@ export const createSubCategoryValidator = [
   check('name')
     .notEmpty()
     .withMessage('SubCategory name is required!')
-    .isLength({ min: 2 })
-    .withMessage('SubCategory name must be at least 2 characters long!')
-    .isLength({ max: 30 })
-    .withMessage('SubCategory name must be at most 30 characters long!'),
-
-  check('category')
-    .notEmpty()
-    .withMessage('SubCategory must belong to category!')
-    .isMongoId()
-    .withMessage('Invalid Category ID format!'),
+    .isLength({ min: 2, max: 30 })
+    .withMessage('SubCategory name must be between 2 and 30 characters long!'),
 
   validatorMiddleware,
 ];
