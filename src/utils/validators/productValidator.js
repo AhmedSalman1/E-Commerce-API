@@ -1,5 +1,7 @@
 import { check } from 'express-validator';
 import { validatorMiddleware } from '../../middlewares/validatorMiddleware.js';
+import { Category } from '../../models/category.model.js';
+import { SubCategory } from '../../models/subcategory.model.js';
 
 const idValidationChain = [
   check('id').isMongoId().withMessage('Invalid Product ID format!'),
@@ -67,12 +69,30 @@ export const createProductValidator = [
     .notEmpty()
     .withMessage('Product must belong to category')
     .isMongoId()
-    .withMessage('Invalid Category ID format!'),
+    .withMessage('Invalid Category ID format!')
+    .custom(async (val) => {
+      const category = await Category.findById(val);
 
-  check('subCategory')
+      if (!category) {
+        throw new Error(`Category with ID ${val} does not exist`);
+      }
+      return true;
+    }),
+
+  check('subcategories')
     .optional()
     .isMongoId()
-    .withMessage('Invalid SubCategory ID format!'),
+    .withMessage('Invalid SubCategory ID format!')
+    .custom(async (values) => {
+      const subCategory = await SubCategory.find({
+        _id: { $exists: true, $in: values },
+      });
+
+      if (!subCategory || subCategory.length !== values.length) {
+        throw new Error('One or more subcategories do not exist');
+      }
+      return true;
+    }),
 
   check('brand').optional().isMongoId().withMessage('Invalid Brand ID format!'),
 
