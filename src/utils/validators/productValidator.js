@@ -81,14 +81,16 @@ export const createProductValidator = [
 
   check('subcategories')
     .optional()
-    .isMongoId()
-    .withMessage('Invalid SubCategory ID format!')
-    .custom(async (values) => {
-      const subCategory = await SubCategory.find({
-        _id: { $exists: true, $in: values },
+    .isArray()
+    .withMessage('Product subcategories must be an array')
+    // Check each subcategory ID's existence and association with the given category
+    .custom(async (subcategoriesIds, { req }) => {
+      const subCategories = await SubCategory.find({
+        _id: { $exists: true, $in: subcategoriesIds },
+        category: req.body.category,
       });
 
-      if (!subCategory || subCategory.length !== values.length) {
+      if (subCategories.length !== subcategoriesIds.length) {
         throw new Error('One or more subcategories do not exist');
       }
       return true;
