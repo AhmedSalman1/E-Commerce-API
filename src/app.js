@@ -5,6 +5,7 @@ import { dbConnection } from '../config/db.js';
 import categoryRouter from './routes/category.routes.js';
 import subCategoryRouter from './routes/subcategory.routes.js';
 import brandRouter from './routes/brand.routes.js';
+import productRouter from './routes/product.routes.js';
 import { AppError } from './utils/appError.js';
 import { globalErrorHandler } from './middlewares/errorHandler.js';
 
@@ -24,6 +25,7 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/subcategories', subCategoryRouter);
 app.use('/api/v1/brands', brandRouter);
+app.use('/api/v1/products', productRouter);
 
 // ignore all MWs → jump to globalErrorHandler MW
 app.all('*', (req, res, next) => {
