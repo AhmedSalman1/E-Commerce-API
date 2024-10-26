@@ -2,21 +2,29 @@ import slugify from 'slugify';
 import catchAsyncError from 'express-async-handler';
 import { Category } from '../models/category.model.js';
 import { AppError } from '../utils/appError.js';
+import { APIFeatures } from '../utils/apiFeatures.js';
 
 export const getAllCategories = catchAsyncError(async (req, res) => {
-  const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 3;
-  const skip = (page - 1) * limit;
+  // Build query
+  const totalDocuments = await Category.countDocuments();
+  const features = new APIFeatures(Category.find(), req.query)
+    .filter()
+    .search()
+    .sort()
+    .limitFields()
+    .paginate(totalDocuments);
 
-  const categories = await Category.find({}).skip(skip).limit(limit);
+  // Execute query
+  const { query, pagination } = features;
+  const categories = await query;
 
   res.status(200).json({
     status: 'success',
     results: categories.length,
-    page,
     data: {
       categories,
     },
+    pagination,
   });
 });
 

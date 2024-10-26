@@ -2,24 +2,29 @@ import slugify from 'slugify';
 import catchAsyncError from 'express-async-handler';
 import { Product } from '../models/product.model.js';
 import { AppError } from '../utils/appError.js';
+import { APIFeatures } from '../utils/apiFeatures.js';
 
 export const getAllProducts = catchAsyncError(async (req, res) => {
-  const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 9;
-  const skip = (page - 1) * limit;
+  // Build query
+  const totalDocuments = await Product.countDocuments();
+  const features = new APIFeatures(Product.find(), req.query)
+    .filter()
+    .search('Product')
+    .sort()
+    .limitFields()
+    .paginate(totalDocuments);
 
-  const products = await Product.find()
-    .skip(skip)
-    .limit(limit)
-    .populate('category subcategories', 'name -_id');
+  // Execute query
+  const { query, pagination } = features;
+  const products = await query;
 
   res.status(200).json({
     status: 'success',
     results: products.length,
-    page,
     data: {
       products,
     },
+    pagination,
   });
 });
 
