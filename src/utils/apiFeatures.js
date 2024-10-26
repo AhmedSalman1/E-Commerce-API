@@ -18,16 +18,24 @@ export class APIFeatures {
     return this;
   }
 
-  search() {
+  search(modelName) {
     if (this.queryString.keyword) {
       const keyword = this.queryString.keyword.trim();
       if (keyword) {
-        const searchConditions = {
-          $or: [
-            { title: { $regex: keyword, $options: 'i' } },
-            { description: { $regex: keyword, $options: 'i' } },
-          ],
-        };
+        let searchConditions = {};
+
+        if (modelName === 'Product') {
+          searchConditions = {
+            $or: [
+              { title: { $regex: keyword, $options: 'i' } },
+              { description: { $regex: keyword, $options: 'i' } },
+            ],
+          };
+        } else {
+          searchConditions = {
+            name: { $regex: keyword, $options: 'i' },
+          };
+        }
 
         this.query = this.query.find(searchConditions);
       }
@@ -58,12 +66,29 @@ export class APIFeatures {
     return this;
   }
 
-  paginate() {
-    const page = this.queryString.page * 1 || 1;
-    const limit = this.queryString.limit * 1 || 50;
+  paginate(totalDocuments) {
+    const page = Math.max(1, this.queryString.page * 1 || 1);
+    const limit = Math.max(1, this.queryString.limit * 1 || 50);
     const skip = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    // pagination result
+    const pagination = {
+      page,
+      limit,
+      totalPages: Math.ceil(totalDocuments / limit),
+    };
+
+    // next and prev page number
+    if (endIndex < totalDocuments) {
+      pagination.next = page + 1;
+    }
+    if (page > 1) {
+      pagination.prev = page - 1;
+    }
 
     this.query = this.query.skip(skip).limit(limit);
+    this.pagination = pagination;
 
     return this;
   }
