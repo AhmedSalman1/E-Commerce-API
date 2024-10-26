@@ -5,15 +5,18 @@ import { AppError } from '../utils/appError.js';
 import { APIFeatures } from '../utils/apiFeatures.js';
 
 export const getAllProducts = catchAsyncError(async (req, res) => {
+  // Build query
+  const totalDocuments = await Product.countDocuments();
   const features = new APIFeatures(Product.find(), req.query)
     .filter()
-    .search()
+    .search('Product')
     .sort()
     .limitFields()
-    .paginate();
+    .paginate(totalDocuments);
 
   // Execute query
-  const products = await features.query;
+  const { query, pagination } = features;
+  const products = await query;
 
   res.status(200).json({
     status: 'success',
@@ -21,6 +24,7 @@ export const getAllProducts = catchAsyncError(async (req, res) => {
     data: {
       products,
     },
+    pagination,
   });
 });
 

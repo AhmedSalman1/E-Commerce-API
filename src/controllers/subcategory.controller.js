@@ -2,6 +2,7 @@ import slugify from 'slugify';
 import catchAsyncError from 'express-async-handler';
 import { SubCategory } from '../models/subcategory.model.js';
 import { AppError } from '../utils/appError.js';
+import { APIFeatures } from '../utils/apiFeatures.js';
 
 export const setCategoryIdToBody = (req, res, next) => {
   // Nested route
@@ -10,14 +11,18 @@ export const setCategoryIdToBody = (req, res, next) => {
 };
 
 export const getAllSubCategories = catchAsyncError(async (req, res) => {
-  const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 3;
-  const skip = (page - 1) * limit;
+  // Build query
+  const totalDocuments = await SubCategory.countDocuments();
+  const features = new APIFeatures(SubCategory.find(), req.query)
+    .filter()
+    .search()
+    .sort()
+    .limitFields()
+    .paginate(totalDocuments);
 
-  let filter = {};
-  if (req.params.categoryId) filter = { category: req.params.categoryId };
-
-  const subCategories = await SubCategory.find(filter).skip(skip).limit(limit);
+  // Execute query
+  const { query, pagination } = features;
+  const subCategories = await query;
 
   res.status(200).json({
     status: 'success',
@@ -25,6 +30,7 @@ export const getAllSubCategories = catchAsyncError(async (req, res) => {
     data: {
       subCategories,
     },
+    pagination,
   });
 });
 
