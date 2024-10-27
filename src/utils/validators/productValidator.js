@@ -1,3 +1,4 @@
+import slugify from 'slugify';
 import { check } from 'express-validator';
 import { validatorMiddleware } from '../../middlewares/validatorMiddleware.js';
 import { Category } from '../../models/category.model.js';
@@ -14,7 +15,11 @@ export const createProductValidator = [
     .notEmpty()
     .withMessage('Product title is required')
     .isLength({ min: 3 })
-    .withMessage('Title must be at least 3 chars'),
+    .withMessage('Title must be at least 3 chars')
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
+    }),
 
   check('description')
     .notEmpty()
@@ -108,6 +113,14 @@ export const createProductValidator = [
 
 export const updateProductValidator = [
   ...idValidationChain,
+
+  check('title')
+    .optional()
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
+    }),
+
   validatorMiddleware,
 ];
 
