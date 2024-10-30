@@ -1,19 +1,13 @@
 import multer from 'multer';
+import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
+import catchAsyncError from 'express-async-handler';
+
 import { AppError } from '../utils/appError.js';
 import * as factory from './handlerFactory.js';
 import { Category } from '../models/category.model.js';
 
-// Disk Storage
-const multerStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'public/img/categories');
-  },
-  filename: (req, file, cb) => {
-    const ext = file.mimetype.split('/')[1];
-    cb(null, `category-${uuidv4()}-${Date.now()}.${ext}`);
-  },
-});
+const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
@@ -29,6 +23,19 @@ const upload = multer({
 });
 
 export const uploadCategoryImage = upload.single('image');
+
+export const resizeCategoryImage = catchAsyncError(async (req, res, next) => {
+  // console.log(req.file);
+  const filename = `category-${uuidv4()}-${Date.now()}.jpeg`;
+
+  await sharp(req.file.buffer)
+    .resize(600, 600)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/categories/${filename}`);
+
+  next();
+});
 
 export const getAllCategories = factory.getAll(Category);
 export const getCategory = factory.getOne(Category);

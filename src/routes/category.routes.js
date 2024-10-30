@@ -13,6 +13,7 @@ import {
   updateCategory,
   deleteCategory,
   uploadCategoryImage,
+  resizeCategoryImage,
 } from '../controllers/category.controller.js';
 
 import subCategoryRouter from './subcategory.routes.js';
@@ -25,7 +26,12 @@ router.use('/:categoryId/subcategories', subCategoryRouter);
 router
   .route('/')
   .get(getAllCategories)
-  .post(uploadCategoryImage, createCategoryValidator, createCategory);
+  .post(
+    uploadCategoryImage,
+    resizeCategoryImage,
+    createCategoryValidator,
+    createCategory
+  );
 router
   .route('/:id')
   .get(getCategoryValidator, getCategory)
