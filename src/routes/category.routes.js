@@ -35,7 +35,12 @@ router
 router
   .route('/:id')
   .get(getCategoryValidator, getCategory)
-  .patch(updateCategoryValidator, updateCategory)
+  .patch(
+    uploadCategoryImage,
+    resizeCategoryImage,
+    updateCategoryValidator,
+    updateCategory
+  )
   .delete(deleteCategoryValidator, deleteCategory);
 
 export default router;

@@ -34,6 +34,9 @@ export const resizeCategoryImage = catchAsyncError(async (req, res, next) => {
     .jpeg({ quality: 90 })
     .toFile(`public/img/categories/${filename}`);
 
+  // Save image name in DB
+  req.body.image = filename;
+
   next();
 });
 
