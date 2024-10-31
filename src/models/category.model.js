@@ -20,4 +20,21 @@ const categorySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const setImageUrl = (doc) => {
+  if (doc.image) {
+    const imageUrl = `${process.env.BASE_URL}/img/categories/${doc.image}`;
+    doc.image = imageUrl;
+  }
+};
+
+// MONGOOSE MIDDLEWARE: find, update
+categorySchema.post('init', (doc) => {
+  setImageUrl(doc);
+});
+
+// runs after create → .save()
+categorySchema.post('save', (doc) => {
+  setImageUrl(doc);
+});
+
 export const Category = mongoose.model('Category', categorySchema);

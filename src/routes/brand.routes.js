@@ -12,15 +12,20 @@ import {
   createBrand,
   updateBrand,
   deleteBrand,
+  uploadBrandImage,
+  resizeBrandImage,
 } from '../controllers/brand.controller.js';
 
 const router = express.Router();
 
-router.route('/').get(getAllBrands).post(createBrandValidator, createBrand);
+router
+  .route('/')
+  .get(getAllBrands)
+  .post(uploadBrandImage, resizeBrandImage, createBrandValidator, createBrand);
 router
   .route('/:id')
   .get(getBrandValidator, getBrand)
-  .patch(updateBrandValidator, updateBrand)
+  .patch(uploadBrandImage, resizeBrandImage, updateBrandValidator, updateBrand)
   .delete(deleteBrandValidator, deleteBrand);
 
 export default router;

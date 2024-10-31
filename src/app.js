@@ -1,13 +1,15 @@
-import dotenv from 'dotenv';
 import express from 'express';
+import dotenv from 'dotenv';
 import morgan from 'morgan';
+
 import { dbConnection } from '../config/db.js';
+import { AppError } from './utils/appError.js';
+import { globalErrorHandler } from './middlewares/errorHandler.js';
+
 import categoryRouter from './routes/category.routes.js';
 import subCategoryRouter from './routes/subcategory.routes.js';
 import brandRouter from './routes/brand.routes.js';
 import productRouter from './routes/product.routes.js';
-import { AppError } from './utils/appError.js';
-import { globalErrorHandler } from './middlewares/errorHandler.js';
 
 dotenv.config();
 
@@ -16,6 +18,7 @@ dbConnection();
 const app = express();
 
 app.use(express.json());
+app.use(express.static('public'));
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));

@@ -12,6 +12,8 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  uploadProductImages,
+  resizeProductImages,
 } from '../controllers/product.controller.js';
 
 const router = express.Router();
@@ -19,11 +21,21 @@ const router = express.Router();
 router
   .route('/')
   .get(getAllProducts)
-  .post(createProductValidator, createProduct);
+  .post(
+    uploadProductImages,
+    resizeProductImages,
+    createProductValidator,
+    createProduct
+  );
 router
   .route('/:id')
   .get(getProductValidator, getProduct)
-  .patch(updateProductValidator, updateProduct)
+  .patch(
+    uploadProductImages,
+    resizeProductImages,
+    updateProductValidator,
+    updateProduct
+  )
   .delete(deleteProductValidator, deleteProduct);
 
 export default router;
