@@ -10,6 +10,8 @@ export const uploadCategoryImage = uploadSingleImage('image');
 
 export const resizeCategoryImage = catchAsyncError(async (req, res, next) => {
   // console.log(req.file);
+  if (!req.file) return next();
+
   const filename = `category-${uuidv4()}-${Date.now()}.jpeg`;
 
   await sharp(req.file.buffer)
