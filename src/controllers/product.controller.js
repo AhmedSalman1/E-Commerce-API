@@ -4,25 +4,9 @@ import catchAsyncError from 'express-async-handler';
 
 import * as factory from './handlerFactory.js';
 import { Product } from '../models/product.model.js';
-import { AppError } from '../utils/appError.js';
-import multer from 'multer';
+import { uploadMultipleImages } from '../middlewares/uploadImageMiddleware.js';
 
-const multerStorage = multer.memoryStorage();
-
-const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image')) {
-    cb(null, true);
-  } else {
-    cb(new AppError('Not an image! Please upload only images.', 400), false);
-  }
-};
-
-const upload = multer({
-  storage: multerStorage,
-  fileFilter: multerFilter,
-});
-
-export const uploadProductImages = upload.fields([
+export const uploadProductImages = uploadMultipleImages([
   { name: 'imageCover', maxCount: 1 },
   { name: 'images', maxCount: 5 },
 ]);

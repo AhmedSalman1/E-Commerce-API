@@ -1,7 +1,7 @@
 import multer from 'multer';
 import { AppError } from '../utils/appError.js';
 
-export const uploadSingleImage = (fieldName) => {
+const multerOptions = () => {
   const multerStorage = multer.memoryStorage();
 
   const multerFilter = (req, file, cb) => {
@@ -17,5 +17,11 @@ export const uploadSingleImage = (fieldName) => {
     fileFilter: multerFilter,
   });
 
-  return upload.single(fieldName);
+  return upload;
 };
+
+export const uploadSingleImage = (fieldName) =>
+  multerOptions().single(fieldName);
+
+export const uploadMultipleImages = (arrayOfFields) =>
+  multerOptions().fields(arrayOfFields);
