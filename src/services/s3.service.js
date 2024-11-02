@@ -19,3 +19,12 @@ export const s3Upload = async (file) => {
     return new AppError('Error uploading file to S3', 500);
   }
 };
+
+export const s3UploadMultiple = async (files) => {
+  try {
+    const uploadPromises = files.map((file) => s3Upload(file));
+    return await Promise.all(uploadPromises);
+  } catch (err) {
+    return new AppError('Error uploading multiple file to S3', 500);
+  }
+};

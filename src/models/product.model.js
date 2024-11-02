@@ -80,12 +80,12 @@ productSchema.pre(/^find/, function (next) {
 });
 
 const setImageUrl = (doc) => {
-  if (doc.imageCover) {
+  if (doc.imageCover && !doc.imageCover.startsWith('http')) {
     const imageUrl = `${process.env.BASE_URL}/img/products/${doc.imageCover}`;
     doc.imageCover = imageUrl;
   }
 
-  if (doc.images) {
+  if (doc.images && !doc.images[0]?.startsWith('http')) {
     const images = [];
     doc.images.forEach((image) => {
       const imageUrl = `${process.env.BASE_URL}/img/products/${image}`;
