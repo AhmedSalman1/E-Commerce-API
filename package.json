@@ -7,7 +7,8 @@
   "scripts": {
     "start": "nodemon src/server.js",
     "start:prod": "set NODE_ENV=production&& nodemon src/server.js",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "set NODE_ENV=test&& jest --watchAll --detectOpenHandles"
   },
   "author": "Ahmed Ali",
   "license": "ISC",
@@ -18,6 +19,7 @@
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
     "express-validator": "^7.2.0",
+    "mongodb-memory-server": "^10.1.2",
     "mongoose": "^8.7.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
@@ -26,6 +28,9 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.25.9",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/preset-react": "^7.25.9",
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
     "eslint": "^8.57.1",
@@ -33,11 +38,13 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^5.2.1",
-    "eslint-plugin-promise": "^7.1.0",
+    "eslint-plugin-promise": "^6.1.1",
     "husky": "^9.1.6",
+    "jest": "^29.7.0",
     "lint-staged": "^15.2.10",
     "nodemon": "^3.1.7",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "supertest": "^7.0.0"
   },
   "lint-staged": {
     "*.js": [
