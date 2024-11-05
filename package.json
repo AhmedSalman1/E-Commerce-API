@@ -8,7 +8,8 @@
     "start": "nodemon src/server.js",
     "start:prod": "set NODE_ENV=production&& nodemon src/server.js",
     "prepare": "husky",
-    "test": "set NODE_ENV=test&& jest --watchAll --detectOpenHandles"
+    "test": "jest --detectOpenHandles",
+    "test:watch": "jest --watchAll"
   },
   "author": "Ahmed Ali",
   "license": "ISC",
