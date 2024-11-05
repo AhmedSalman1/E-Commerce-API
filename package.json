@@ -5,8 +5,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon src/app.js",
-    "start:prod": "set NODE_ENV=production&& nodemon src/app.js",
+    "start": "nodemon src/server.js",
+    "start:prod": "set NODE_ENV=production&& nodemon src/server.js",
     "prepare": "husky"
   },
   "author": "Ahmed Ali",
