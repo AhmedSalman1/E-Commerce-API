@@ -1,4 +1,5 @@
 import slugify from 'slugify';
+import bcrypt from 'bcryptjs';
 import { check } from 'express-validator';
 import { validatorMiddleware } from '../../middlewares/validatorMiddleware.js';
 import { User } from '../../models/user.model.js';
@@ -52,6 +53,9 @@ export const createUserValidator = [
     .isMobilePhone()
     .withMessage('Invalid phone number format!'),
 
+  check('role').optional(),
+  check('photo').optional(),
+
   validatorMiddleware,
 ];
 
@@ -68,6 +72,64 @@ export const updateUserValidator = [
       return true;
     }),
 
+  check('email')
+    .optional()
+    .isEmail()
+    .withMessage('Invalid email format!')
+    .custom((val) =>
+      User.findOne({ email: val }).then((user) => {
+        if (user) {
+          return Promise.reject(new Error('Email already in use!'));
+        }
+      })
+    ),
+
+  check('phone')
+    .optional()
+    .isMobilePhone()
+    .withMessage('Invalid phone number format!'),
+
+  check('role').optional(),
+  check('photo').optional(),
+
+  validatorMiddleware,
+];
+
+export const changePasswordValidator = [
+  ...idValidationChain,
+  check('currentPassword')
+    .notEmpty()
+    .withMessage('Current password is required!'),
+
+  check('passwordConfirm')
+    .notEmpty()
+    .withMessage('Password confirmation is required!'),
+
+  check('password')
+    .notEmpty()
+    .withMessage('password is required!')
+    .custom(async (val, { req }) => {
+      // Verify current password
+      const user = await User.findById(req.params.id);
+      if (!user) {
+        throw new Error('User not found!');
+      }
+
+      const isCorrectPassword = await bcrypt.compare(
+        req.body.currentPassword,
+        user.password
+      );
+
+      if (!isCorrectPassword) {
+        throw new Error('Current password is incorrect!');
+      }
+
+      // Verify password confirm
+      if (val !== req.body.passwordConfirm) {
+        throw new Error('Passwords do not match!');
+      }
+      return true;
+    }),
   validatorMiddleware,
 ];
 

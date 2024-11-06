@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import catchAsyncError from 'express-async-handler';
+import bcrypt from 'bcryptjs';
 
 import * as factory from './handlerFactory.js';
 import { User } from '../models/user.model.js';
@@ -33,8 +34,61 @@ export const resizeUserImage = catchAsyncError(async (req, res, next) => {
   }
 });
 
+export const changePassword = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+  const updatedUserPassword = await User.findByIdAndUpdate(
+    id,
+    {
+      password: await bcrypt.hash(req.body.password, 12),
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  if (!updatedUserPassword) {
+    return next(new AppError(`${User.modelName} with ID ${id} not found`, 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      updatedUserPassword,
+    },
+  });
+});
+
 export const createUser = factory.createOne(User);
 export const getAllUsers = factory.getAll(User);
 export const getUser = factory.getOne(User);
-export const updateUser = factory.updateOne(User);
+export const updateUser = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+  const updatedUser = await User.findByIdAndUpdate(
+    id,
+    {
+      name: req.body.name,
+      slug: req.body.slug,
+      email: req.body.email,
+      phone: req.body.phone,
+      photo: req.body.photo,
+      role: req.body.role,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  if (!updatedUser) {
+    return next(new AppError(`${User.modelName} with ID ${id} not found`, 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      updatedUser,
+    },
+  });
+});
 export const deleteUser = factory.deleteOne(User);

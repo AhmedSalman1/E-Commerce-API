@@ -4,6 +4,7 @@ import {
   getUserValidator,
   updateUserValidator,
   deleteUserValidator,
+  changePasswordValidator,
 } from '../utils/validators/userValidator.js';
 
 import {
@@ -14,9 +15,12 @@ import {
   deleteUser,
   uploadUserImage,
   resizeUserImage,
+  changePassword,
 } from '../controllers/user.controller.js';
 
 const router = express.Router();
+
+router.patch('/changePassword/:id', changePasswordValidator, changePassword);
 
 router
   .route('/')
