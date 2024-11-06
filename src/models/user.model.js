@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Please provide a password'],
       minLength: [8, 'Password too short'],
     },
+    active: {
+      type: Boolean,
+      default: true,
+      select: false,
+    },
   },
   { timestamps: true }
 );

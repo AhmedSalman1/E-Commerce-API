@@ -8,6 +8,7 @@ import categoryRouter from './routes/category.routes.js';
 import subCategoryRouter from './routes/subcategory.routes.js';
 import brandRouter from './routes/brand.routes.js';
 import productRouter from './routes/product.routes.js';
+import userRouter from './routes/user.routes.js';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/subcategories', subCategoryRouter);
 app.use('/api/v1/brands', brandRouter);
 app.use('/api/v1/products', productRouter);
+app.use('/api/v1/users', userRouter);
 
 // ignore all MWs → jump to globalErrorHandler MW
 app.all('*', (req, res, next) => {
