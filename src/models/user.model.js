@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please provide a password'],
       minLength: [8, 'Password too short'],
+      select: false,
     },
     active: {
       type: Boolean,
