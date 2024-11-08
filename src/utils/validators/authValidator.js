@@ -45,3 +45,19 @@ export const signupValidator = [
 
   validatorMiddleware,
 ];
+
+export const loginValidator = [
+  check('email')
+    .notEmpty()
+    .withMessage('Email is required!')
+    .isEmail()
+    .withMessage('Invalid email format!'),
+
+  check('password')
+    .notEmpty()
+    .withMessage('Password is required!')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long!'),
+
+  validatorMiddleware,
+];
