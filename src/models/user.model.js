@@ -36,6 +36,10 @@ const userSchema = new mongoose.Schema(
       minLength: [8, 'Password too short'],
       select: false,
     },
+    passwordChangedAt: {
+      type: Date,
+      select: false,
+    },
     active: {
       type: Boolean,
       default: true,
@@ -51,5 +55,26 @@ userSchema.pre('save', async function (next) {
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
+
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+/*                  Instance Methods                  */
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+
+    return changedTimestamp > JWTTimestamp;
+  }
+
+  return false; //* password not changed
+};
 
 export const User = mongoose.model('User', userSchema);
