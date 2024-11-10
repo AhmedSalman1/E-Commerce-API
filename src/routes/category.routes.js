@@ -16,6 +16,8 @@ import {
   resizeCategoryImage,
 } from '../controllers/category.controller.js';
 
+import { protect } from '../controllers/auth.controller.js';
+
 import subCategoryRouter from './subcategory.routes.js';
 
 const router = express.Router();
@@ -27,6 +29,7 @@ router
   .route('/')
   .get(getAllCategories)
   .post(
+    protect,
     uploadCategoryImage,
     resizeCategoryImage,
     createCategoryValidator,

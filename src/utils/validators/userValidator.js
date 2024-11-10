@@ -110,7 +110,7 @@ export const changePasswordValidator = [
     .withMessage('password is required!')
     .custom(async (val, { req }) => {
       // Verify current password
-      const user = await User.findById(req.params.id);
+      const user = await User.findById(req.params.id).select('+password');
       if (!user) {
         throw new Error('User not found!');
       }

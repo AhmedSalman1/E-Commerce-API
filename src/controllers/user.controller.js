@@ -1,6 +1,5 @@
 import sharp from 'sharp';
 import catchAsyncError from 'express-async-handler';
-import bcrypt from 'bcryptjs';
 
 import * as factory from './handlerFactory.js';
 import { User } from '../models/user.model.js';
@@ -36,25 +35,16 @@ export const resizeUserImage = catchAsyncError(async (req, res, next) => {
 
 export const changePassword = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  const updatedUserPassword = await User.findByIdAndUpdate(
-    id,
-    {
-      password: await bcrypt.hash(req.body.password, 12),
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  const user = await User.findById(id).select('+password');
 
-  if (!updatedUserPassword) {
-    return next(new AppError(`${User.modelName} with ID ${id} not found`, 404));
-  }
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  await user.save();
 
   res.status(200).json({
     status: 'success',
     data: {
-      updatedUserPassword,
+      user,
     },
   });
 });
