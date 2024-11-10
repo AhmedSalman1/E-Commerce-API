@@ -62,7 +62,6 @@ export const protect = catchAsyncError(async (req, res, next) => {
   }
 
   if (!token) {
-    res.redirect('/');
     return next(
       new AppError('You are not logged in! Please log in to get access.', 401)
     );
@@ -94,3 +93,52 @@ export const protect = catchAsyncError(async (req, res, next) => {
   req.user = currentUser;
   next();
 });
+
+export const refreshAccessToken = catchAsyncError(async (req, res, next) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return next(new AppError('No refresh token provided', 401));
+  }
+
+  const decoded = await promisify(jwt.verify)(
+    refreshToken,
+    process.env.JWT_REFRESH_SECRET
+  );
+
+  const user = await User.findById(decoded.id).select('+refreshToken');
+
+  if (!user || user.refreshToken !== refreshToken) {
+    return next(new AppError('Invalid refresh token', 403));
+  }
+
+  const newAccessToken = user.generateAccessToken();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      accessToken: newAccessToken,
+    },
+  });
+});
+
+export const oAuthCallback = (req, res) => {
+  const { accessToken, refreshToken } = req.user;
+
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict', // Prevent CSRF
+  };
+
+  res.cookie('refreshToken', refreshToken, cookieOptions);
+  res.status(200).json({
+    status: 'success',
+    data: {
+      accessToken,
+    },
+  });
+};

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const userSchema = new mongoose.Schema(
   {
@@ -32,8 +33,23 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Please provide a password'],
       minLength: [8, 'Password too short'],
+      select: false,
+      validate: {
+        validator: function (val) {
+          // Only require a password if the user has no Google ID
+          return this.googleId || val;
+        },
+        message: 'Please provide a password',
+      },
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      select: false,
+    },
+    refreshToken: {
+      type: String,
       select: false,
     },
     passwordChangedAt: {
@@ -75,6 +91,18 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   }
 
   return false; //* password not changed
+};
+
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
+  });
+};
+
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+  });
 };
 
 export const User = mongoose.model('User', userSchema);
