@@ -16,7 +16,7 @@ import {
   resizeCategoryImage,
 } from '../controllers/category.controller.js';
 
-import { protect } from '../controllers/auth.controller.js';
+import * as authController from '../controllers/auth.controller.js';
 
 import subCategoryRouter from './subcategory.routes.js';
 
@@ -29,7 +29,8 @@ router
   .route('/')
   .get(getAllCategories)
   .post(
-    protect,
+    authController.protect,
+    authController.restrictTo('admin', 'manager'),
     uploadCategoryImage,
     resizeCategoryImage,
     createCategoryValidator,
@@ -39,11 +40,18 @@ router
   .route('/:id')
   .get(getCategoryValidator, getCategory)
   .patch(
+    authController.protect,
+    authController.restrictTo('admin', 'manager'),
     uploadCategoryImage,
     resizeCategoryImage,
     updateCategoryValidator,
     updateCategory
   )
-  .delete(deleteCategoryValidator, deleteCategory);
+  .delete(
+    authController.protect,
+    authController.restrictTo('admin'),
+    deleteCategoryValidator,
+    deleteCategory
+  );
 
 export default router;
