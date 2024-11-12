@@ -49,10 +49,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
       select: false,
     },
-    refreshToken: {
-      type: String,
-      select: false,
-    },
     passwordChangedAt: {
       type: Date,
       select: false,
@@ -104,12 +100,6 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
-  });
-};
-
-userSchema.methods.generateRefreshToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
   });
 };
 

@@ -8,7 +8,6 @@ import {
   signup,
   login,
   oAuthCallback,
-  refreshAccessToken,
   forgotPassword,
   resetPassword,
 } from '../controllers/auth.controller.js';
@@ -18,7 +17,6 @@ const router = express.Router();
 
 router.get('/google', oAuthenticated);
 router.get('/google/callback', oCallback, oAuthCallback);
-router.post('/refresh-token', refreshAccessToken);
 
 router.post('/signup', signupValidator, signup);
 router.post('/login', loginValidator, login);
