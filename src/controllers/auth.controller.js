@@ -1,17 +1,13 @@
+import crypto from 'crypto';
 import { promisify } from 'util';
 import jwt from 'jsonwebtoken';
 import catchAsyncError from 'express-async-handler';
 import bcrypt from 'bcryptjs';
 import { AppError } from '../utils/appError.js';
 import { sendEmail } from '../utils/sendEmail.js';
-import crypto from 'crypto';
+import { createToken } from '../utils/createToken.js';
 
 import { User } from '../models/user.model.js';
-
-const createToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
 
 export const signup = catchAsyncError(async (req, res, next) => {
   const { name, email, password } = req.body;

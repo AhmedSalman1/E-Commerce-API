@@ -95,8 +95,7 @@ export const updateUserValidator = [
   validatorMiddleware,
 ];
 
-export const changePasswordValidator = [
-  ...idValidationChain,
+export const changeMyPasswordValidator = [
   check('currentPassword')
     .notEmpty()
     .withMessage('Current password is required!'),
@@ -110,7 +109,7 @@ export const changePasswordValidator = [
     .withMessage('password is required!')
     .custom(async (val, { req }) => {
       // Verify current password
-      const user = await User.findById(req.params.id).select('+password');
+      const user = await User.findById(req.user._id).select('+password');
       if (!user) {
         throw new Error('User not found!');
       }
@@ -134,3 +133,33 @@ export const changePasswordValidator = [
 ];
 
 export const deleteUserValidator = [...idValidationChain, validatorMiddleware];
+
+export const updateLoggedUserValidator = [
+  check('name')
+    .optional()
+    .isLength({ min: 3 })
+    .withMessage('User name must be at least 3 characters long!')
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
+    }),
+
+  check('email')
+    .optional()
+    .isEmail()
+    .withMessage('Invalid email format!')
+    .custom((val) =>
+      User.findOne({ email: val }).then((user) => {
+        if (user) {
+          return Promise.reject(new Error('Email already in use!'));
+        }
+      })
+    ),
+
+  check('phone')
+    .optional()
+    .isMobilePhone()
+    .withMessage('Invalid phone number format!'),
+
+  validatorMiddleware,
+];
