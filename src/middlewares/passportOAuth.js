@@ -25,12 +25,8 @@ passport.use(
         }
 
         const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
 
-        user.refreshToken = refreshToken;
-        await user.save();
-
-        return done(null, { accessToken, refreshToken });
+        return done(null, { accessToken });
       } catch (error) {
         return done(error, false);
       }
