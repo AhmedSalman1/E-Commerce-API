@@ -16,16 +16,37 @@ import {
   resizeBrandImage,
 } from '../controllers/brand.controller.js';
 
+import * as authController from '../controllers/auth.controller.js';
+
 const router = express.Router();
 
 router
   .route('/')
   .get(getAllBrands)
-  .post(uploadBrandImage, resizeBrandImage, createBrandValidator, createBrand);
+  .post(
+    authController.protect,
+    authController.restrictTo('admin', 'manager'),
+    uploadBrandImage,
+    resizeBrandImage,
+    createBrandValidator,
+    createBrand
+  );
 router
   .route('/:id')
   .get(getBrandValidator, getBrand)
-  .patch(uploadBrandImage, resizeBrandImage, updateBrandValidator, updateBrand)
-  .delete(deleteBrandValidator, deleteBrand);
+  .patch(
+    authController.protect,
+    authController.restrictTo('admin', 'manager'),
+    uploadBrandImage,
+    resizeBrandImage,
+    updateBrandValidator,
+    updateBrand
+  )
+  .delete(
+    authController.protect,
+    authController.restrictTo('admin'),
+    deleteBrandValidator,
+    deleteBrand
+  );
 
 export default router;

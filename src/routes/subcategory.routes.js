@@ -15,17 +15,35 @@ import {
   setCategoryIdToBody,
 } from '../controllers/subcategory.controller.js';
 
+import * as authController from '../controllers/auth.controller.js';
+
 // access params from other(parent) routers
 const router = express.Router({ mergeParams: true });
 
 router
   .route('/')
   .get(getAllSubCategories)
-  .post(setCategoryIdToBody, createSubCategoryValidator, createSubCategory);
+  .post(
+    authController.protect,
+    authController.restrictTo('admin', 'manager'),
+    setCategoryIdToBody,
+    createSubCategoryValidator,
+    createSubCategory
+  );
 router
   .route('/:id')
   .get(getSubCategoryValidator, getSubCategory)
-  .patch(updateSubCategoryValidator, updateSubCategory)
-  .delete(deleteSubCategoryValidator, deleteSubCategory);
+  .patch(
+    authController.protect,
+    authController.restrictTo('admin', 'manager'),
+    updateSubCategoryValidator,
+    updateSubCategory
+  )
+  .delete(
+    authController.protect,
+    authController.restrictTo('admin'),
+    deleteSubCategoryValidator,
+    deleteSubCategory
+  );
 
 export default router;

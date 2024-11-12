@@ -4,7 +4,8 @@ import {
   getUserValidator,
   updateUserValidator,
   deleteUserValidator,
-  changePasswordValidator,
+  updateLoggedUserValidator,
+  changeMyPasswordValidator,
 } from '../utils/validators/userValidator.js';
 
 import {
@@ -15,12 +16,31 @@ import {
   deleteUser,
   uploadUserImage,
   resizeUserImage,
-  changePassword,
+  getMe,
+  updateMe,
+  updateMyPassword,
+  deleteMe,
 } from '../controllers/user.controller.js';
+
+import * as authController from '../controllers/auth.controller.js';
 
 const router = express.Router();
 
-router.patch('/changePassword/:id', changePasswordValidator, changePassword);
+router.use(authController.protect);
+
+router.get('/getMe', getMe, getUser);
+router.patch('/updateMyPassword', changeMyPasswordValidator, updateMyPassword);
+router.delete('/deleteMe', deleteMe);
+router.patch(
+  '/updateMe',
+  uploadUserImage,
+  resizeUserImage,
+  updateLoggedUserValidator,
+  updateMe
+);
+
+// Admin
+router.use(authController.restrictTo('admin', 'manager'));
 
 router
   .route('/')
