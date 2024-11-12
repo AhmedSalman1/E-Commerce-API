@@ -19,6 +19,7 @@ export const signup = catchAsyncError(async (req, res, next) => {
   });
 
   const token = createToken(newUser._id);
+  newUser.password = undefined;
 
   res.status(201).json({
     status: 'success',
@@ -39,6 +40,7 @@ export const login = catchAsyncError(async (req, res, next) => {
   }
 
   const token = createToken(user._id);
+  user.password = undefined;
 
   res.status(200).json({
     status: 'success',
