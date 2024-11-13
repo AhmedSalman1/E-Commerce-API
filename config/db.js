@@ -11,7 +11,9 @@ let [mongod, MongoInstance] = [null, false];
 // Connection
 export const mongoConnect = async () => {
   if (process.env.NODE_ENV === 'test') {
-    mongod = await MongoMemoryServer.create();
+    mongod = await MongoMemoryServer.create({
+      instance: { port: 27017 },
+    });
     DB = mongod.getUri();
     MongoInstance = true;
   } else {
