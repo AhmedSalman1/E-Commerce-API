@@ -31,10 +31,13 @@ export const getAll = (Model) =>
     });
   });
 
-export const getOne = (Model) =>
+export const getOne = (Model, populateOptions) =>
   catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
-    const doc = await Model.findById(id);
+    let query = Model.findById(id);
+    if (populateOptions) query = query.populate(populateOptions);
+
+    const doc = await query;
 
     if (!doc) {
       return next(
