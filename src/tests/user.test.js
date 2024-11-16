@@ -70,7 +70,7 @@ describe('User tests for admin roles', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body.status).toBe('success');
-      expect(Array.isArray(res.body.data.doc)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
   });
 
@@ -83,7 +83,7 @@ describe('User tests for admin roles', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.status).toEqual('success');
-      expect(res.body.data.doc).toHaveProperty('_id');
+      expect(res.body.data).toHaveProperty('_id');
     });
   });
 
@@ -95,7 +95,7 @@ describe('User tests for admin roles', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       const res = await request(app)
-        .patch(`/api/v1/users/${createdUser.body.data.doc._id}`)
+        .patch(`/api/v1/users/${createdUser.body.data._id}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send(updatedUserInfo);
 
@@ -114,7 +114,7 @@ describe('User tests for admin roles', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       const res = await request(app)
-        .delete(`/api/v1/users/${createdUser.body.data.doc._id}`)
+        .delete(`/api/v1/users/${createdUser.body.data._id}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(204);
@@ -139,7 +139,7 @@ describe('User tests for user roles', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
-      expect(res.body.data.doc.email).toBe(userLogin.email);
+      expect(res.body.data.email).toBe(userLogin.email);
     });
   });
 
