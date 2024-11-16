@@ -77,7 +77,7 @@ describe('handlerFactory.js CRUD handlers', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         status: 'success',
-        data: { doc: { id: 'testId', name: 'Test Doc' } },
+        data: { id: 'testId', name: 'Test Doc' },
       });
     });
 
@@ -109,7 +109,7 @@ describe('handlerFactory.js CRUD handlers', () => {
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
         status: 'success',
-        data: { doc: mockDoc },
+        data: mockDoc,
       });
     });
 
@@ -140,7 +140,7 @@ describe('handlerFactory.js CRUD handlers', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         status: 'success',
-        data: { doc: mockDoc },
+        data: mockDoc,
       });
     });
 
