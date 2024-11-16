@@ -21,7 +21,7 @@ export const createReviewValidator = [
     .isMongoId()
     .withMessage('Invalid Review ID format!')
     .custom((val, { req }) => {
-      if (req.body.user !== req.user._id.toString()) {
+      if (req.body.user.toString() !== req.user._id.toString()) {
         throw new Error('You are not allowed to create this review!');
       }
 
@@ -80,7 +80,7 @@ export const deleteReviewValidator = [
           throw new Error(`Review with ID ${val} does not exist!`);
         }
 
-        if (review.user.toString() !== req.user._id.toString()) {
+        if (review.user._id.toString() !== req.user._id.toString()) {
           throw new Error('You are not allowed to delete this review!');
         }
       }

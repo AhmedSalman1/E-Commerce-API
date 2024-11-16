@@ -12,11 +12,12 @@ import {
   createReview,
   updateReview,
   deleteReview,
+  setProductAndUserIdsToBody,
 } from '../controllers/review.controller.js';
 
 import * as authController from '../controllers/auth.controller.js';
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router
   .route('/')
@@ -24,6 +25,7 @@ router
   .post(
     authController.protect,
     authController.restrictTo('user'),
+    setProductAndUserIdsToBody,
     createReviewValidator,
     createReview
   );

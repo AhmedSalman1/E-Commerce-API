@@ -18,7 +18,12 @@ import {
 
 import * as authController from '../controllers/auth.controller.js';
 
+import reviewRouter from './review.routes.js';
+
 const router = express.Router();
+
+// Git /api/v1/products/:productId/reviews  →  nested route
+router.use('/:productId/reviews', reviewRouter);
 
 router
   .route('/')
