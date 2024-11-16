@@ -7,6 +7,7 @@ export const getAll = (Model) =>
     // Allow nested routes (Git /api/v1/categories/:categoryId/subcategories)
     let filter = {};
     if (req.params.categoryId) filter = { category: req.params.categoryId };
+    if (req.params.productId) filter = { product: req.params.productId };
 
     // Build query
     const totalDocuments = await Model.countDocuments();
@@ -31,10 +32,13 @@ export const getAll = (Model) =>
     });
   });
 
-export const getOne = (Model) =>
+export const getOne = (Model, populateOptions) =>
   catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
-    const doc = await Model.findById(id);
+    let query = Model.findById(id);
+    if (populateOptions) query = query.populate(populateOptions);
+
+    const doc = await query;
 
     if (!doc) {
       return next(
