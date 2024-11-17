@@ -74,6 +74,11 @@ export const updateOne = (Model) =>
       );
     }
 
+    if (process.env.NODE_ENV !== 'test') {
+      // Trigger 'save' event when update doc
+      doc.save();
+    }
+
     res.status(200).json({
       status: 'success',
       data: doc,
@@ -89,6 +94,12 @@ export const deleteOne = (Model) =>
       return next(
         new AppError(`${Model.modelName} with ID ${id} not found`, 404)
       );
+    }
+
+    if (Model.modelName === 'Review') {
+      const productId = doc.product;
+
+      await Model.calcAvgRatingsAndQuantity(productId);
     }
 
     res.status(204).json({
