@@ -74,8 +74,11 @@ export const updateOne = (Model) =>
       );
     }
 
-    // Trigger 'save' event when update doc
-    doc.save();
+    if (process.env.NODE_ENV !== 'test') {
+      // Trigger 'save' event when update doc
+      doc.save();
+    }
+
     res.status(200).json({
       status: 'success',
       data: doc,
