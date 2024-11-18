@@ -58,4 +58,12 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+orderSchema.pre(/^find/, function (next) {
+  this.populate({ path: 'user', select: 'name photo email phone' }).populate({
+    path: 'cartItems.product',
+    select: 'title imageCover',
+  });
+  next();
+});
+
 export const Order = mongoose.model('Order', orderSchema);

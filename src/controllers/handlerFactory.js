@@ -8,6 +8,7 @@ export const getAll = (Model) =>
     let filter = {};
     if (req.params.categoryId) filter = { category: req.params.categoryId };
     if (req.params.productId) filter = { product: req.params.productId };
+    if (req.filterObj) filter = req.filterObj;
 
     // Build query
     const totalDocuments = await Model.countDocuments();
@@ -33,6 +34,16 @@ export const getAll = (Model) =>
 export const getOne = (Model, populateOptions) =>
   catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
+
+    // Prevent user from accessing other user's documents
+    if (req.filterObj) {
+      const exists = await Model.exists({ ...req.filterObj, _id: id });
+
+      if (!exists) {
+        return next(new AppError(`${Model.modelName}  not found`, 404));
+      }
+    }
+
     let query = Model.findById(id);
     if (populateOptions) query = query.populate(populateOptions);
 
