@@ -1,5 +1,7 @@
 import express from 'express';
 import morgan from 'morgan';
+import cors from 'cors';
+import compression from 'compression';
 
 import { AppError } from './utils/appError.js';
 import { globalErrorHandler } from './middlewares/errorHandler.js';
@@ -19,12 +21,21 @@ import orderRouter from './routes/order.routes.js';
 
 const app = express();
 
+app.use(cors());
+app.options('*', cors());
+
+app.use(compression());
+
 app.use(express.json());
 app.use(express.static('public'));
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to Nestify E-Commerce API' });
+});
 
 /*                   ROUTES                   */
 app.use('/api/v1/categories', categoryRouter);
