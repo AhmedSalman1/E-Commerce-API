@@ -33,6 +33,10 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to Nestify E-Commerce API' });
+});
+
 /*                   ROUTES                   */
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/subcategories', subCategoryRouter);

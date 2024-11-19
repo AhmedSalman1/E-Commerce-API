@@ -6,7 +6,7 @@
   "main": "app.js",
   "scripts": {
     "start": "nodemon src/server.js",
-    "start:prod": "set NODE_ENV=production&& nodemon src/server.js",
+    "start:prod": "set NODE_ENV=production&& node src/server.js",
     "prepare": "husky",
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watchAll"
