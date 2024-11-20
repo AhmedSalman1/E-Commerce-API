@@ -18,6 +18,7 @@ import addressRouter from './routes/address.routes.js';
 import couponRouter from './routes/coupon.routes.js';
 import cartRouter from './routes/cart.routes.js';
 import orderRouter from './routes/order.routes.js';
+import { webhookCheckout } from './controllers/order.controller.js';
 
 const app = express();
 
@@ -25,6 +26,12 @@ app.use(cors());
 app.options('*', cors());
 
 app.use(compression());
+
+app.post(
+  'webhook-checkout',
+  express.raw({ type: 'application/json' }),
+  webhookCheckout
+);
 
 app.use(express.json());
 app.use(express.static('public'));
