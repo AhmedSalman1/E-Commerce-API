@@ -1,10 +1,13 @@
 import catchAsyncError from 'express-async-handler';
+import Stripe from 'stripe';
 
 import * as factory from './handlerFactory.js';
 import { Order } from '../models/order.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
 import { AppError } from '../utils/appError.js';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const createCashOrder = catchAsyncError(async (req, res, next) => {
   // 1) Get user cart
@@ -100,3 +103,54 @@ export const updateOrderToDelivered = catchAsyncError(
     });
   }
 );
+
+/*                   STRIPE                   */
+export const getCheckoutSession = catchAsyncError(async (req, res, next) => {
+  // 1) Get user cart
+  const cart = await Cart.findOne({ user: req.user._id });
+
+  if (!cart) {
+    return next(new AppError('Cart not found', 404));
+  }
+
+  // 2) Get order price depend on cart price (check if coupon applied)
+  // app settings
+  const taxPrice = 0;
+  const shippingPrice = 0;
+
+  const cartPrice = cart.totalPriceAfterDiscount
+    ? cart.totalPriceAfterDiscount
+    : cart.totalPrice;
+
+  const totalPrice = cartPrice + taxPrice + shippingPrice;
+
+  // 3) Create checkout session
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price_data: {
+          currency: 'egp',
+          unit_amount: totalPrice * 100,
+          product_data: {
+            name: req.user.name,
+          },
+        },
+        quantity: 1,
+      },
+    ],
+    mode: 'payment',
+    success_url: `${req.protocol}://${req.get('host')}/orders`,
+    cancel_url: `${req.protocol}://${req.get('host')}/cart`,
+    customer_email: req.user.email,
+    client_reference_id: cart._id,
+    client_reference_id: req.params.cartId,
+    metadata: req.body.shippingAddress,
+  });
+
+  // 4) Send session as response
+  res.status(200).json({
+    status: 'success',
+    session,
+  });
+});

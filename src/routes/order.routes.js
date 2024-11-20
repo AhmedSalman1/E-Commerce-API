@@ -7,6 +7,7 @@ import {
   filterObjForUser,
   updateOrderToPaid,
   updateOrderToDelivered,
+  getCheckoutSession,
 } from '../controllers/order.controller.js';
 
 import * as authController from '../controllers/auth.controller.js';
@@ -14,6 +15,12 @@ import * as authController from '../controllers/auth.controller.js';
 const router = express.Router();
 
 router.use(authController.protect);
+
+router.get(
+  '/checkout-session/:cartId',
+  authController.restrictTo('user'),
+  getCheckoutSession
+);
 
 router
   .route('/')
