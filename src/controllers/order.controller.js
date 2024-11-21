@@ -5,6 +5,7 @@ import * as factory from './handlerFactory.js';
 import { Order } from '../models/order.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
+import { User } from '../models/user.model.js';
 import { AppError } from '../utils/appError.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -140,8 +141,8 @@ export const getCheckoutSession = catchAsyncError(async (req, res, next) => {
       },
     ],
     mode: 'payment',
-    success_url: `${req.protocol}://${req.get('host')}/orders`,
-    cancel_url: `${req.protocol}://${req.get('host')}/cart`,
+    success_url: `${req.protocol}://${req.get('host')}/api/v1/orders`,
+    cancel_url: `${req.protocol}://${req.get('host')}/api/v1/cart`,
     customer_email: req.user.email,
     client_reference_id: cart._id,
     client_reference_id: req.params.cartId,
@@ -155,9 +156,44 @@ export const getCheckoutSession = catchAsyncError(async (req, res, next) => {
   });
 });
 
+const createCardOrder = async (session) => {
+  const cartId = session.client_reference_id;
+  const shippingAddress = session.metadata;
+  const orderPrice = session.amount_total / 100;
+
+  const cart = await Cart.findById(cartId);
+  const user = await User.findOne({ email: session.customer_email });
+
+  // 1) Create order with card
+  const order = await Order.create({
+    user: user._id,
+    cartItems: cart.cartItems,
+    shippingAddress,
+    totalPrice: orderPrice,
+    isPaid: true,
+    paidAt: Date.now(),
+    paymentMethod: 'card',
+  });
+
+  // 2) After create order, decrement product quantity, increment sold
+  if (order) {
+    const bulkOpt = cart.cartItems.map((item) => ({
+      updateOne: {
+        filter: { _id: item.product },
+        update: { $inc: { quantity: -item.quantity, sold: item.quantity } },
+      },
+    }));
+
+    await Product.bulkWrite(bulkOpt, {});
+
+    // 3) Clear cart
+    await Cart.findByIdAndDelete(cartId);
+  }
+};
+
+// This will run when stripe payment success paid
 export const webhookCheckout = catchAsyncError(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
-
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event;
@@ -169,6 +205,11 @@ export const webhookCheckout = catchAsyncError(async (req, res, next) => {
   }
 
   if (event.type === 'checkout.session.completed') {
-    console.log('Create Order here...');
+    // Create order
+    createCardOrder(event.data.object);
   }
+
+  res.status(200).json({
+    received: true,
+  });
 });
