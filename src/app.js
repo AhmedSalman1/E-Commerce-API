@@ -4,6 +4,8 @@ import cors from 'cors';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
+import mongoSanitize from 'express-mongo-sanitize';
+import xss from 'xss-clean';
 
 import { AppError } from './utils/appError.js';
 import { globalErrorHandler } from './middlewares/errorHandler.js';
@@ -41,6 +43,9 @@ app.use(express.static('public'));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+app.use(mongoSanitize());
+app.use(xss());
 
 const apiLimiter = rateLimit({
   max: 300,

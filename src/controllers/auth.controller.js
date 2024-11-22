@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { AppError } from '../utils/appError.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import { createToken } from '../utils/createToken.js';
+import { sanitizeUser } from '../utils/sanitizeData.js';
 
 import { User } from '../models/user.model.js';
 
@@ -25,7 +26,7 @@ export const signup = catchAsyncError(async (req, res, next) => {
     status: 'success',
     token,
     data: {
-      user: newUser,
+      user: sanitizeUser(newUser),
     },
   });
 });
@@ -46,7 +47,7 @@ export const login = catchAsyncError(async (req, res, next) => {
     status: 'success',
     token,
     data: {
-      user,
+      user: sanitizeUser(user),
     },
   });
 });
