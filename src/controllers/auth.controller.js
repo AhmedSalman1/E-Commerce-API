@@ -10,6 +10,18 @@ import { sanitizeUser } from '../utils/sanitizeData.js';
 
 import { User } from '../models/user.model.js';
 
+const setCookieWithToken = (res, token) => {
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+  };
+
+  res.cookie('jwt', token, cookieOptions);
+};
+
 export const signup = catchAsyncError(async (req, res, next) => {
   const { name, email, password } = req.body;
 
@@ -21,6 +33,8 @@ export const signup = catchAsyncError(async (req, res, next) => {
 
   const token = createToken(newUser._id);
   newUser.password = undefined;
+
+  setCookieWithToken(res, token);
 
   res.status(201).json({
     status: 'success',
@@ -43,6 +57,8 @@ export const login = catchAsyncError(async (req, res, next) => {
   const token = createToken(user._id);
   user.password = undefined;
 
+  setCookieWithToken(res, token);
+
   res.status(200).json({
     status: 'success',
     token,
@@ -51,6 +67,14 @@ export const login = catchAsyncError(async (req, res, next) => {
     },
   });
 });
+
+export const logout = (req, res) => {
+  res.cookie('jwt', 'logout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ status: 'success' });
+};
 
 export const protect = catchAsyncError(async (req, res, next) => {
   //* 1) Getting token and check of it's there
@@ -108,6 +132,8 @@ export const restrictTo =
 
 export const oAuthCallback = (req, res) => {
   const { accessToken } = req.user;
+
+  setCookieWithToken(res, accessToken);
 
   res.status(200).json({
     status: 'success',
@@ -180,6 +206,8 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   await user.save();
 
   const token = createToken(user._id);
+
+  setCookieWithToken(res, token);
 
   res.status(200).json({
     status: 'success',

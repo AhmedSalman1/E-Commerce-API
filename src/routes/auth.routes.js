@@ -7,6 +7,7 @@ import {
 import {
   signup,
   login,
+  logout,
   oAuthCallback,
   forgotPassword,
   resetPassword,
@@ -20,6 +21,7 @@ router.get('/google/callback', oCallback, oAuthCallback);
 
 router.post('/signup', signupValidator, signup);
 router.post('/login', loginValidator, login);
+router.get('/logout', logout);
 router.post('/forgotPassword', forgotPassword);
 router.patch('/resetPassword/:token', resetPassword);
 
