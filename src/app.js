@@ -2,6 +2,10 @@ import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+import hpp from 'hpp';
+import mongoSanitize from 'express-mongo-sanitize';
+import xss from 'xss-clean';
 
 import { AppError } from './utils/appError.js';
 import { globalErrorHandler } from './middlewares/errorHandler.js';
@@ -33,12 +37,43 @@ app.post(
   webhookCheckout
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+app.use(mongoSanitize());
+app.use(xss());
+
+const apiLimiter = rateLimit({
+  max: 300,
+  windowMs: 15 * 60 * 1000,
+  message: 'Too many requests from this IP, please try again after 15 minutes!',
+});
+
+const loginLimiter = rateLimit({
+  max: 20,
+  windowMs: 15 * 60 * 1000,
+  message:
+    'Too many login attempts from this IP, please try again after 15 minutes!',
+});
+
+app.use('/api', apiLimiter);
+app.use('/api/v1/auth/login', loginLimiter);
+
+app.use(
+  hpp({
+    whitelist: [
+      'price',
+      'quantity',
+      'sold',
+      'ratingsAverage',
+      'ratingsQuantity',
+    ],
+  })
+);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Nestify E-Commerce API' });
