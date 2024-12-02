@@ -1,0 +1,3 @@
+nestify.systems, www.nestify.systems {
+    reverse_proxy nestify-container:5000
+}

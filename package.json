@@ -6,8 +6,7 @@
   "main": "app.js",
   "scripts": {
     "start": "nodemon src/server.js",
-    "start:prod": "set NODE_ENV=production&& node src/server.js",
-    "prepare": "husky",
+    "start:prod": "cross-env NODE_ENV=production node src/server.js",
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watchAll"
   },
@@ -19,6 +18,7 @@
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.5",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",

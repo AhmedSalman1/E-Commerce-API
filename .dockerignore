@@ -1,0 +1,9 @@
+/node_modules
+
+.husky
+coverage
+
+.env
+
+Dockerfile
+docker-compose*
