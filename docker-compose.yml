@@ -1,0 +1,28 @@
+services:
+  nestify:
+    container_name: nestify-container
+    image: a7medsalman/nestify-docker
+    build: .
+    ports:
+      - '5000:5000'
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./.env
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy-container
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./conf/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - nestify
+
+volumes:
+  caddy_data:
+  caddy_config:
