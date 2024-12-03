@@ -1,6 +1,7 @@
 services:
   nestify:
     container_name: nestify-container
+    image: a7medsalman/nestify-docker
     build: .
     ports:
       - '5000:5000'
