@@ -10,6 +10,8 @@ import {
   getCheckoutSession,
 } from '../controllers/order.controller.js';
 
+import { createOrderValidator } from '../utils/validators/orderValidator.js';
+
 import * as authController from '../controllers/auth.controller.js';
 
 const router = express.Router();
@@ -24,7 +26,11 @@ router.get(
 
 router
   .route('/')
-  .post(authController.restrictTo('user'), createCashOrder)
+  .post(
+    authController.restrictTo('user'),
+    createOrderValidator,
+    createCashOrder
+  )
   .get(
     authController.restrictTo('user', 'admin', 'manager'),
     filterObjForUser,

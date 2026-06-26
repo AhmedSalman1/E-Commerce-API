@@ -9,6 +9,8 @@ import {
   applyCoupon,
 } from '../controllers/cart.controller.js';
 
+import { applyCouponValidator } from '../utils/validators/orderValidator.js';
+
 import * as authController from '../controllers/auth.controller.js';
 
 const router = express.Router();
@@ -16,7 +18,7 @@ const router = express.Router();
 router.use(authController.protect, authController.restrictTo('user'));
 
 router.route('/').get(getCart).post(addProductToCart).delete(clearCart);
-router.patch('/applyCoupon', applyCoupon);
+router.patch('/applyCoupon', applyCouponValidator, applyCoupon);
 router
   .route('/:itemId')
   .patch(updateCartItemQuantity)

@@ -144,9 +144,12 @@ export const getCheckoutSession = catchAsyncError(async (req, res, next) => {
     success_url: `${req.protocol}://${req.get('host')}/api/v1/orders`,
     cancel_url: `${req.protocol}://${req.get('host')}/api/v1/cart`,
     customer_email: req.user.email,
-    client_reference_id: cart._id,
-    client_reference_id: req.params.cartId,
-    metadata: req.body.shippingAddress,
+    client_reference_id: cart._id.toString(),
+    // client_reference_id: req.params.cartId,
+    metadata: {
+      shippingAddress: JSON.stringify(req.body.shippingAddress),
+      userId: req.user._id.toString(),
+    },
   });
 
   // 4) Send session as response
@@ -206,7 +209,7 @@ export const webhookCheckout = catchAsyncError(async (req, res, next) => {
 
   if (event.type === 'checkout.session.completed') {
     // Create order
-    createCardOrder(event.data.object);
+    await createCardOrder(event.data.object);
   }
 
   res.status(200).json({
