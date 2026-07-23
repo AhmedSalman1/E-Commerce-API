@@ -7,34 +7,12 @@ import { AppError } from '../utils/appError.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import { sanitizeUser } from '../utils/sanitizeData.js';
 import { createAccessToken } from '../utils/createAccessToken.js';
-import { createRefreshToken } from '../utils/createRefreshToken.js';
 
 import { User } from '../models/user.model.js';
-
-// const setCookieWithToken = (res, token) => {
-//   const cookieOptions = {
-//     expires: new Date(
-//       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-//     ),
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === 'production',
-//   };
-
-//   res.cookie('jwt', token, cookieOptions);
-// };
-
-export const setCookieWithRefreshToken = (res, refreshToken) => {
-  const cookieOptions = {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  };
-
-  res.cookie('refreshToken', refreshToken, cookieOptions);
-};
+import {
+  issueTokens,
+  setCookieWithRefreshToken,
+} from '../utils/issueTokens.js';
 
 export const signup = catchAsyncError(async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -45,24 +23,14 @@ export const signup = catchAsyncError(async (req, res, next) => {
     password,
   });
 
-  const accessToken = createAccessToken(newUser._id);
-  const refreshToken = createRefreshToken(newUser._id);
-
-  const hashedRefreshToken = crypto
-    .createHash('sha256')
-    .update(refreshToken)
-    .digest('hex');
-
-  newUser.refreshToken = hashedRefreshToken;
-  await newUser.save({ validateBeforeSave: false });
+  const accessToken = await issueTokens(newUser, res);
 
   newUser.password = undefined;
-  setCookieWithRefreshToken(res, refreshToken);
 
   res.status(201).json({
     status: 'success',
-    accessToken,
     data: {
+      accessToken,
       user: sanitizeUser(newUser),
     },
   });
@@ -77,24 +45,14 @@ export const login = catchAsyncError(async (req, res, next) => {
     return next(new AppError('Incorrect email or password', 401));
   }
 
-  const accessToken = createAccessToken(user._id);
-  const refreshToken = createRefreshToken(user._id);
-
-  const hashedRefreshToken = crypto
-    .createHash('sha256')
-    .update(refreshToken)
-    .digest('hex');
-
-  user.refreshToken = hashedRefreshToken;
-  await user.save({ validateBeforeSave: false });
+  const accessToken = await issueTokens(user, res);
 
   user.password = undefined;
-  setCookieWithRefreshToken(res, refreshToken);
 
   res.status(200).json({
     status: 'success',
-    accessToken,
     data: {
+      accessToken,
       user: sanitizeUser(user),
     },
   });
@@ -316,17 +274,7 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   user.refreshToken = undefined;
   await user.save();
 
-  const accessToken = createAccessToken(user._id);
-  const refreshToken = createRefreshToken(user._id);
-
-  user.refreshToken = crypto
-    .createHash('sha256')
-    .update(refreshToken)
-    .digest('hex');
-
-  await user.save({ validateBeforeSave: false });
-
-  setCookieWithRefreshToken(res, refreshToken);
+  const accessToken = await issueTokens(user, res);
 
   res.status(200).json({
     status: 'success',

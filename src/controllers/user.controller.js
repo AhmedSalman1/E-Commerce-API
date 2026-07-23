@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import sharp from 'sharp';
 import catchAsyncError from 'express-async-handler';
 
@@ -7,9 +6,7 @@ import { User } from '../models/user.model.js';
 import { uploadSingleImage } from '../middlewares/uploadImageMiddleware.js';
 import { s3Upload } from '../services/s3.service.js';
 import { AppError } from '../utils/appError.js';
-import { createAccessToken } from '../utils/createAccessToken.js';
-import { createRefreshToken } from '../utils/createRefreshToken.js';
-import { setCookieWithRefreshToken } from './auth.controller.js';
+import { issueTokens } from '../utils/issueTokens.js';
 
 export const uploadUserImage = uploadSingleImage('photo');
 
@@ -102,23 +99,13 @@ export const updateMyPassword = catchAsyncError(async (req, res, next) => {
   user.refreshToken = undefined;
   await user.save();
 
-  const accessToken = createAccessToken(user._id);
-  const refreshToken = createRefreshToken(user._id);
-
-  const hashedRefreshToken = crypto
-    .createHash('sha256')
-    .update(refreshToken)
-    .digest('hex');
-
-  user.refreshToken = hashedRefreshToken;
-
-  await user.save({ validateBeforeSave: false });
-
-  setCookieWithRefreshToken(res, refreshToken);
+  const accessToken = await issueTokens(user, res);
 
   res.status(200).json({
     status: 'success',
-    accessToken,
+    data: {
+      accessToken,
+    },
   });
 });
 
