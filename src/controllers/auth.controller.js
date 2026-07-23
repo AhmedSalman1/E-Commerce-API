@@ -5,21 +5,35 @@ import catchAsyncError from 'express-async-handler';
 import bcrypt from 'bcryptjs';
 import { AppError } from '../utils/appError.js';
 import { sendEmail } from '../utils/sendEmail.js';
-import { createToken } from '../utils/createToken.js';
 import { sanitizeUser } from '../utils/sanitizeData.js';
+import { createAccessToken } from '../utils/createAccessToken.js';
+import { createRefreshToken } from '../utils/createRefreshToken.js';
 
 import { User } from '../models/user.model.js';
 
-const setCookieWithToken = (res, token) => {
+// const setCookieWithToken = (res, token) => {
+//   const cookieOptions = {
+//     expires: new Date(
+//       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+//     ),
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === 'production',
+//   };
+
+//   res.cookie('jwt', token, cookieOptions);
+// };
+
+export const setCookieWithRefreshToken = (res, refreshToken) => {
   const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
   };
 
-  res.cookie('jwt', token, cookieOptions);
+  res.cookie('refreshToken', refreshToken, cookieOptions);
 };
 
 export const signup = catchAsyncError(async (req, res, next) => {
@@ -31,14 +45,23 @@ export const signup = catchAsyncError(async (req, res, next) => {
     password,
   });
 
-  const token = createToken(newUser._id);
-  newUser.password = undefined;
+  const accessToken = createAccessToken(newUser._id);
+  const refreshToken = createRefreshToken(newUser._id);
 
-  setCookieWithToken(res, token);
+  const hashedRefreshToken = crypto
+    .createHash('sha256')
+    .update(refreshToken)
+    .digest('hex');
+
+  newUser.refreshToken = hashedRefreshToken;
+  await newUser.save({ validateBeforeSave: false });
+
+  newUser.password = undefined;
+  setCookieWithRefreshToken(res, refreshToken);
 
   res.status(201).json({
     status: 'success',
-    token,
+    accessToken,
     data: {
       user: sanitizeUser(newUser),
     },
@@ -54,46 +77,130 @@ export const login = catchAsyncError(async (req, res, next) => {
     return next(new AppError('Incorrect email or password', 401));
   }
 
-  const token = createToken(user._id);
-  user.password = undefined;
+  const accessToken = createAccessToken(user._id);
+  const refreshToken = createRefreshToken(user._id);
 
-  setCookieWithToken(res, token);
+  const hashedRefreshToken = crypto
+    .createHash('sha256')
+    .update(refreshToken)
+    .digest('hex');
+
+  user.refreshToken = hashedRefreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  user.password = undefined;
+  setCookieWithRefreshToken(res, refreshToken);
 
   res.status(200).json({
     status: 'success',
-    token,
+    accessToken,
     data: {
       user: sanitizeUser(user),
     },
   });
 });
 
-export const logout = (req, res) => {
-  res.cookie('jwt', 'logout', {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true,
+// TODO
+export const refreshToken = catchAsyncError(async (req, res, next) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    return next(
+      new AppError('You are not logged in! Please log in to get access.', 401)
+    );
+  }
+
+  const decoded = await promisify(jwt.verify)(
+    refreshToken,
+    process.env.JWT_REFRESH_SECRET
+  );
+
+  const currentUser = await User.findById(decoded.id).select(
+    '+refreshToken +passwordChangedAt'
+  );
+  if (!currentUser) {
+    return next(
+      new AppError(
+        'The user belonging to this token does no longer exist.',
+        401
+      )
+    );
+  }
+
+  const hashedRefreshToken = crypto
+    .createHash('sha256')
+    .update(refreshToken)
+    .digest('hex');
+
+  if (hashedRefreshToken !== currentUser.refreshToken) {
+    return next(
+      new AppError('Your refresh token is invalid. Please log in again.', 401)
+    );
+  }
+
+  if (currentUser.changedPasswordAfter(decoded.iat)) {
+    return next(
+      new AppError('User recently changed password! Please log in again.', 401)
+    );
+  }
+
+  const accessToken = createAccessToken(currentUser._id);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      accessToken,
+    },
   });
-  res.status(200).json({ status: 'success' });
-};
+});
+
+export const logout = catchAsyncError(async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (refreshToken) {
+    const hashedRefreshToken = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+
+    await User.findOneAndUpdate(
+      { refreshToken: hashedRefreshToken },
+      { $unset: { refreshToken: 1 } }
+    );
+  }
+
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+
+  res.status(200).json({
+    status: 'success',
+  });
+});
 
 export const protect = catchAsyncError(async (req, res, next) => {
   //* 1) Getting token and check of it's there
-  let token;
+  let accessToken;
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
-    token = req.headers.authorization.split(' ')[1];
+    accessToken = req.headers.authorization.split(' ')[1];
   }
 
-  if (!token) {
+  if (!accessToken) {
     return next(
       new AppError('You are not logged in! Please log in to get access.', 401)
     );
   }
 
   //* 2) Verification token
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  const decoded = await promisify(jwt.verify)(
+    accessToken,
+    process.env.JWT_SECRET
+  );
 
   //* 3) Check if user still exists
   const currentUser = await User.findById(decoded.id).select(
@@ -133,7 +240,7 @@ export const restrictTo =
 export const oAuthCallback = (req, res) => {
   const { accessToken } = req.user;
 
-  setCookieWithToken(res, accessToken);
+  setCookieWithRefreshToken(res, accessToken);
 
   res.status(200).json({
     status: 'success',
@@ -172,8 +279,10 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
     user.passwordResetExpires = undefined;
     await user.save();
     return next(
-      new AppError('There was an error sending the email. Try again later!'),
-      500
+      new AppError(
+        'There was an error sending the email. Try again later!',
+        500
+      )
     );
   }
 
@@ -193,7 +302,7 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   const user = await User.findOne({
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
-  });
+  }).select('+refreshToken');
 
   if (!user) {
     return next(new AppError('Token is invalid or has expired', 400));
@@ -203,16 +312,26 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
 
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
+
+  user.refreshToken = undefined;
   await user.save();
 
-  const token = createToken(user._id);
+  const accessToken = createAccessToken(user._id);
+  const refreshToken = createRefreshToken(user._id);
 
-  setCookieWithToken(res, token);
+  user.refreshToken = crypto
+    .createHash('sha256')
+    .update(refreshToken)
+    .digest('hex');
+
+  await user.save({ validateBeforeSave: false });
+
+  setCookieWithRefreshToken(res, refreshToken);
 
   res.status(200).json({
     status: 'success',
     data: {
-      token,
+      accessToken,
     },
   });
 });

@@ -11,6 +11,7 @@ import {
   oAuthCallback,
   forgotPassword,
   resetPassword,
+  refreshToken,
 } from '../controllers/auth.controller.js';
 import { oAuthenticated, oCallback } from '../middlewares/passportOAuth.js';
 
@@ -19,9 +20,10 @@ const router = express.Router();
 router.get('/google', oAuthenticated);
 router.get('/google/callback', oCallback, oAuthCallback);
 
+router.post('/refresh', refreshToken);
 router.post('/signup', signupValidator, signup);
 router.post('/login', loginValidator, login);
-router.get('/logout', logout);
+router.post('/logout', logout);
 router.post('/forgotPassword', forgotPassword);
 router.patch('/resetPassword/:token', resetPassword);
 

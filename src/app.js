@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
+import cookieParser from 'cookie-parser';
 
 import { AppError } from './utils/appError.js';
 import { globalErrorHandler } from './middlewares/errorHandler.js';
@@ -30,6 +31,7 @@ app.use(cors());
 app.options('*', cors());
 
 app.use(compression());
+app.use(cookieParser());
 
 app.post(
   '/webhook-checkout',
