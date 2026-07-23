@@ -36,18 +36,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       minLength: [8, 'Password too short'],
       select: false,
-      validate: {
-        validator: function (val) {
-          // Only require a password if the user has no Google ID
-          return this.googleId || val;
-        },
-        message: 'Please provide a password',
+      required: function () {
+        return !this.googleId;
       },
     },
     googleId: {
       type: String,
       unique: true,
-      select: false,
+      sparse: true,
     },
     passwordChangedAt: {
       type: Date,
@@ -55,9 +51,10 @@ const userSchema = new mongoose.Schema(
     },
     passwordResetToken: String,
     passwordResetExpires: Date,
-    refreshToken: {
-      type: String,
+    refreshTokens: {
+      type: [String],
       select: false,
+      default: [],
     },
     active: {
       type: Boolean,

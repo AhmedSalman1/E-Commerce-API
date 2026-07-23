@@ -9,10 +9,7 @@ import { sanitizeUser } from '../utils/sanitizeData.js';
 import { createAccessToken } from '../utils/createAccessToken.js';
 
 import { User } from '../models/user.model.js';
-import {
-  issueTokens,
-  setCookieWithRefreshToken,
-} from '../utils/issueTokens.js';
+import { issueTokens } from '../utils/issueTokens.js';
 
 export const signup = catchAsyncError(async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -74,7 +71,7 @@ export const refreshToken = catchAsyncError(async (req, res, next) => {
   );
 
   const currentUser = await User.findById(decoded.id).select(
-    '+refreshToken +passwordChangedAt'
+    '+refreshTokens +passwordChangedAt'
   );
   if (!currentUser) {
     return next(
@@ -90,7 +87,7 @@ export const refreshToken = catchAsyncError(async (req, res, next) => {
     .update(refreshToken)
     .digest('hex');
 
-  if (hashedRefreshToken !== currentUser.refreshToken) {
+  if (!currentUser.refreshTokens.includes(hashedRefreshToken)) {
     return next(
       new AppError('Your refresh token is invalid. Please log in again.', 401)
     );
@@ -122,8 +119,8 @@ export const logout = catchAsyncError(async (req, res) => {
       .digest('hex');
 
     await User.findOneAndUpdate(
-      { refreshToken: hashedRefreshToken },
-      { $unset: { refreshToken: 1 } }
+      { refreshTokens: hashedRefreshToken },
+      { $pull: { refreshTokens: hashedRefreshToken } }
     );
   }
 
@@ -195,18 +192,13 @@ export const restrictTo =
     next();
   };
 
-export const oAuthCallback = (req, res) => {
-  const { accessToken } = req.user;
+export const oAuthCallback = catchAsyncError(async (req, res) => {
+  const accessToken = await issueTokens(req.user, res);
 
-  setCookieWithRefreshToken(res, accessToken);
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      accessToken,
-    },
-  });
-};
+  res.redirect(
+    `${process.env.FRONTEND_URL}/oauth/success#token=${accessToken}`
+  );
+});
 
 /*                  Password Reset                  */
 export const forgotPassword = catchAsyncError(async (req, res, next) => {
@@ -260,7 +252,7 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   const user = await User.findOne({
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
-  }).select('+refreshToken');
+  }).select('+refreshTokens');
 
   if (!user) {
     return next(new AppError('Token is invalid or has expired', 400));
@@ -271,7 +263,7 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
 
-  user.refreshToken = undefined;
+  user.refreshTokens = [];
   await user.save();
 
   const accessToken = await issueTokens(user, res);

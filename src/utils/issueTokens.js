@@ -21,10 +21,15 @@ export const issueTokens = async (user, res) => {
 
   const refreshToken = createRefreshToken(user._id);
 
-  user.refreshToken = crypto
+  const hashedToken = crypto
     .createHash('sha256')
     .update(refreshToken)
     .digest('hex');
+
+  const MAX_SESSIONS = 5;
+  user.refreshTokens = [...(user.refreshTokens || []), hashedToken].slice(
+    -MAX_SESSIONS
+  );
 
   await user.save({ validateBeforeSave: false });
 

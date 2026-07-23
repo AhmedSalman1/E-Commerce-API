@@ -96,7 +96,7 @@ export const updateMyPassword = catchAsyncError(async (req, res, next) => {
 
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
-  user.refreshToken = undefined;
+  user.refreshToken = [];
   await user.save();
 
   const accessToken = await issueTokens(user, res);

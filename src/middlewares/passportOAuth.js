@@ -14,19 +14,34 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({ googleId: profile.id });
+        const email = profile.emails?.[0]?.value?.toLowerCase();
 
-        if (!user) {
-          user = await User.create({
-            googleId: profile.id,
-            name: profile.displayName,
-            email: profile.emails[0].value,
-          });
+        if (!email) {
+          return done(
+            new Error('Your Google account does not provide an email address.')
+          );
         }
 
-        const accessToken = user.generateAccessToken();
+        // 1. if user exists, return user
+        let user = await User.findOne({ googleId: profile.id });
+        if (user) return done(null, user);
 
-        return done(null, { accessToken });
+        // if email exists already, link google account
+        user = await User.findOne({ email });
+        if (user) {
+          user.googleId = profile.id;
+          await user.save({ validateBeforeSave: false });
+          return done(null, user);
+        }
+
+        user = await User.create({
+          name: profile.displayName,
+          email,
+          googleId: profile.id,
+          photo: profile.photos?.[0]?.value,
+        });
+
+        return done(null, user);
       } catch (error) {
         return done(error, false);
       }
@@ -36,6 +51,10 @@ passport.use(
 
 export const oAuthenticated = passport.authenticate('google', {
   scope: ['profile', 'email'],
+  session: false,
 });
 
-export const oCallback = passport.authenticate('google', { session: false });
+export const oCallback = passport.authenticate('google', {
+  session: false,
+  failureRedirect: '/api/v1/auth/google/failure',
+});

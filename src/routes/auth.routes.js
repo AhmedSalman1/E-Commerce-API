@@ -19,6 +19,12 @@ const router = express.Router();
 
 router.get('/google', oAuthenticated);
 router.get('/google/callback', oCallback, oAuthCallback);
+router.get('/google/failure', (req, res) => {
+  res.status(401).json({
+    status: 'fail',
+    message: 'Google authentication was cancelled or could not be completed.',
+  });
+});
 
 router.post('/refresh', refreshToken);
 router.post('/signup', signupValidator, signup);

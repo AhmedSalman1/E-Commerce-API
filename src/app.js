@@ -7,6 +7,7 @@ import hpp from 'hpp';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import cookieParser from 'cookie-parser';
+import passport from 'passport';
 
 import { AppError } from './utils/appError.js';
 import { globalErrorHandler } from './middlewares/errorHandler.js';
@@ -32,6 +33,7 @@ app.options('*', cors());
 
 app.use(compression());
 app.use(cookieParser());
+app.use(passport.initialize());
 
 app.post(
   '/webhook-checkout',
