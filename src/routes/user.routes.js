@@ -20,6 +20,7 @@ import {
   updateMe,
   updateMyPassword,
   deleteMe,
+  getMySessions,
 } from '../controllers/user.controller.js';
 
 import * as authController from '../controllers/auth.controller.js';
@@ -29,6 +30,7 @@ const router = express.Router();
 router.use(authController.protect);
 
 router.get('/getMe', getMe, getUser);
+router.get('/me/sessions', getMySessions);
 router.patch('/updateMyPassword', changeMyPasswordValidator, updateMyPassword);
 router.delete('/deleteMe', deleteMe);
 router.patch(

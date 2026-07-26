@@ -6,10 +6,10 @@ import bcrypt from 'bcryptjs';
 import { AppError } from '../utils/appError.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import { sanitizeUser } from '../utils/sanitizeData.js';
-import { createAccessToken } from '../utils/createAccessToken.js';
 
 import { User } from '../models/user.model.js';
-import { issueTokens } from '../utils/issueTokens.js';
+import { RefreshToken } from '../models/refreshToken.model.js';
+import { hashRefreshToken, issueTokens } from '../utils/issueTokens.js';
 
 export const signup = catchAsyncError(async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -20,7 +20,7 @@ export const signup = catchAsyncError(async (req, res, next) => {
     password,
   });
 
-  const accessToken = await issueTokens(newUser, res);
+  const accessToken = await issueTokens(newUser, res, req);
 
   newUser.password = undefined;
 
@@ -42,7 +42,7 @@ export const login = catchAsyncError(async (req, res, next) => {
     return next(new AppError('Incorrect email or password', 401));
   }
 
-  const accessToken = await issueTokens(user, res);
+  const accessToken = await issueTokens(user, res, req);
 
   user.password = undefined;
 
@@ -55,7 +55,6 @@ export const login = catchAsyncError(async (req, res, next) => {
   });
 });
 
-// TODO
 export const refreshToken = catchAsyncError(async (req, res, next) => {
   const { refreshToken } = req.cookies;
 
@@ -71,7 +70,7 @@ export const refreshToken = catchAsyncError(async (req, res, next) => {
   );
 
   const currentUser = await User.findById(decoded.id).select(
-    '+refreshTokens +passwordChangedAt'
+    '+passwordChangedAt'
   );
   if (!currentUser) {
     return next(
@@ -82,12 +81,16 @@ export const refreshToken = catchAsyncError(async (req, res, next) => {
     );
   }
 
-  const hashedRefreshToken = crypto
-    .createHash('sha256')
-    .update(refreshToken)
-    .digest('hex');
+  const storedToken = await RefreshToken.findOneAndDelete({
+    user: currentUser._id,
+    hashedToken: hashRefreshToken(refreshToken),
+  });
 
-  if (!currentUser.refreshTokens.includes(hashedRefreshToken)) {
+  if (!storedToken) {
+    await RefreshToken.deleteMany({
+      user: currentUser._id,
+      family: decoded.family,
+    });
     return next(
       new AppError('Your refresh token is invalid. Please log in again.', 401)
     );
@@ -99,7 +102,12 @@ export const refreshToken = catchAsyncError(async (req, res, next) => {
     );
   }
 
-  const accessToken = createAccessToken(currentUser._id);
+  const accessToken = await issueTokens(
+    currentUser,
+    res,
+    req,
+    storedToken.family
+  );
 
   res.status(200).json({
     status: 'success',
@@ -113,15 +121,9 @@ export const logout = catchAsyncError(async (req, res) => {
   const { refreshToken } = req.cookies;
 
   if (refreshToken) {
-    const hashedRefreshToken = crypto
-      .createHash('sha256')
-      .update(refreshToken)
-      .digest('hex');
-
-    await User.findOneAndUpdate(
-      { refreshTokens: hashedRefreshToken },
-      { $pull: { refreshTokens: hashedRefreshToken } }
-    );
+    await RefreshToken.deleteOne({
+      hashedToken: hashRefreshToken(refreshToken),
+    });
   }
 
   res.clearCookie('refreshToken', {
@@ -193,7 +195,7 @@ export const restrictTo =
   };
 
 export const oAuthCallback = catchAsyncError(async (req, res) => {
-  const accessToken = await issueTokens(req.user, res);
+  const accessToken = await issueTokens(req.user, res, req);
 
   res.redirect(
     `${process.env.FRONTEND_URL}/oauth/success#token=${accessToken}`
@@ -252,7 +254,7 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   const user = await User.findOne({
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
-  }).select('+refreshTokens');
+  });
 
   if (!user) {
     return next(new AppError('Token is invalid or has expired', 400));
@@ -263,10 +265,11 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
 
-  user.refreshTokens = [];
   await user.save();
 
-  const accessToken = await issueTokens(user, res);
+  await RefreshToken.deleteMany({ user: user._id });
+
+  const accessToken = await issueTokens(user, res, req);
 
   res.status(200).json({
     status: 'success',

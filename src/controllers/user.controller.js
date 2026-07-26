@@ -3,6 +3,7 @@ import catchAsyncError from 'express-async-handler';
 
 import * as factory from './handlerFactory.js';
 import { User } from '../models/user.model.js';
+import { RefreshToken } from '../models/refreshToken.model.js';
 import { uploadSingleImage } from '../middlewares/uploadImageMiddleware.js';
 import { s3Upload } from '../services/s3.service.js';
 import { AppError } from '../utils/appError.js';
@@ -96,16 +97,31 @@ export const updateMyPassword = catchAsyncError(async (req, res, next) => {
 
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
-  user.refreshToken = [];
   await user.save();
 
-  const accessToken = await issueTokens(user, res);
+  await RefreshToken.deleteMany({ user: user._id });
+
+  const accessToken = await issueTokens(user, res, req);
 
   res.status(200).json({
     status: 'success',
     data: {
       accessToken,
     },
+  });
+});
+
+export const getMySessions = catchAsyncError(async (req, res) => {
+  const sessions = await RefreshToken.find({
+    user: req.user._id,
+    expiresAt: { $gt: new Date() },
+  })
+    .sort({ createdAt: -1 })
+    .select('userAgent ip createdAt');
+
+  res.status(200).json({
+    status: 'success',
+    data: { sessions },
   });
 });
 
